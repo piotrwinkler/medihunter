@@ -114,3 +114,5 @@ visits.db.dir
 
 #local runs
 /appointments.json
+
+startup.sh

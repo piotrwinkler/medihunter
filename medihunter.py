@@ -166,51 +166,60 @@ def find_appointment(
 
     med_session.load_search_form()
 
+    print("Searching for appointments... xd")
     while interval > 0 or iteration_counter < 2:
-        appointments = []
-        start_date_param = start_date
-        for _ in range(days_ahead):
-            found_appointments = med_session.search_appointments(
-                region=region,
-                bookingtype=bookingtype,
-                specialization=specialization,
-                clinic=clinic,
-                doctor=doctor,
-                start_date=start_date_param,
-                end_date=end_date,
-                start_time=start_time,
-                end_time=end_time,
-                service=service,
-                disable_phone_search=disable_phone_search
-            )
-
-            if not found_appointments:
-                break
-
-            appointment_datetime = found_appointments[-1].appointment_datetime
-            appointment_datetime = datetime.strptime(
-                appointment_datetime, "%Y-%m-%dT%H:%M:%S"
-            )
-            appointment_datetime = appointment_datetime + timedelta(days=1)
-            start_date_param = appointment_datetime.date().isoformat()
-            appointments.extend(found_appointments)
-
-        if not appointments:
-            click.echo(
-                click.style(
-                    f"(iteration: {iteration_counter}) No results found", fg="yellow"
+        try:
+            appointments = []
+            start_date_param = start_date
+            for _ in range(days_ahead):
+                found_appointments = med_session.search_appointments(
+                    region=region,
+                    bookingtype=bookingtype,
+                    specialization=specialization,
+                    clinic=clinic,
+                    doctor=doctor,
+                    start_date=start_date_param,
+                    end_date=end_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    service=service,
+                    disable_phone_search=disable_phone_search
                 )
-            )
-        else:
-            process_appointments(
-                appointments,
-                iteration_counter,
-                notifier=enable_notifier,
-                notification_title=notification_title,
-            )
 
-        iteration_counter += 1
-        time.sleep(interval * 60)
+                if not found_appointments:
+                    break
+
+                appointment_datetime = found_appointments[-1].appointment_datetime
+                appointment_datetime = datetime.strptime(
+                    appointment_datetime, "%Y-%m-%dT%H:%M:%S"
+                )
+                appointment_datetime = appointment_datetime + timedelta(days=1)
+                start_date_param = appointment_datetime.date().isoformat()
+                appointments.extend(found_appointments)
+
+            if not appointments:
+                click.echo(
+                    click.style(
+                        f"(iteration: {iteration_counter}) No results found", fg="yellow"
+                    )
+                )
+            else:
+                process_appointments(
+                    appointments,
+                    iteration_counter,
+                    notifier=enable_notifier,
+                    notification_title=notification_title,
+                )
+
+            iteration_counter += 1
+            time.sleep(interval * 60)
+        except Exception as e:
+            print("Error: ", e)
+            time.sleep(interval * 60)
+            med_session = login(user, password)
+            if not med_session:
+                return
+            med_session.load_search_form()
 
 
 @click.command()
